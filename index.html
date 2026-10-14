@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Air Rate Card Automation</title>
+<meta name="description" content="Browser-based air rate card workbook merge utility. Files stay in your browser.">
+<style>
+:root{--navy:#10243a;--blue:#1d5fa7;--blue2:#eaf3ff;--ink:#172b3d;--muted:#637386;--line:#d9e2ec;--bg:#f4f7fb;--white:#fff;--green:#176b45;--greenbg:#e8f6ee;--red:#9b2c2c;--redbg:#fff0f0;--amber:#815b0a;--amberbg:#fff6db;--shadow:0 10px 30px rgba(16,36,58,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:linear-gradient(120deg,#10243a,#174c7e);color:white;padding:28px 22px 24px}
+.head{max-width:1160px;margin:auto;display:flex;align-items:center;gap:16px}.logo{height:52px;width:52px;border-radius:14px;background:rgba(255,255,255,.13);display:grid;place-items:center;font-size:25px;border:1px solid rgba(255,255,255,.2)}
+h1{font-size:clamp(23px,3vw,32px);line-height:1.2;margin:0 0 5px;letter-spacing:-.5px}.subtitle{margin:0;color:#d6e5f6}.privacy{max-width:1160px;margin:18px auto 0;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:10px 13px;font-size:13px;display:flex;gap:9px;align-items:center}
+main{max-width:1160px;margin:24px auto;padding:0 18px 50px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:var(--white);border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:var(--shadow);min-width:0}.card h2{font-size:17px;margin:0 0 4px}.hint{color:var(--muted);font-size:13px;margin:0 0 15px}.upload{display:block;border:1.5px dashed #b7c9dc;background:#f8fbff;border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:.15s}.upload:hover{border-color:var(--blue);background:#f0f7ff}.upload strong{display:block;margin:4px 0}.upload small{color:var(--muted)}input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none} .file-name{margin-top:10px;font-size:13px;overflow-wrap:anywhere;color:var(--green);font-weight:600}
+label{display:block;font-weight:650;font-size:13px;margin:14px 0 6px}input[type=text],input[type=number],select,textarea{width:100%;border:1px solid #cbd7e3;background:white;border-radius:8px;padding:10px 11px;font:inherit;color:var(--ink)}input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #9bc8ff;outline-offset:1px}.settings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.settings .card{padding:16px}.settings label{margin-top:0}
+button{font:inherit;font-weight:650;border:0;border-radius:9px;padding:10px 15px;cursor:pointer}.primary{background:var(--blue);color:white}.primary:hover{background:#174f8a}.secondary{background:#e9eff6;color:var(--navy)}.danger{background:var(--redbg);color:var(--red)}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}.section{margin-top:18px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}.section-title h2{font-size:18px;margin:0}.status{border-radius:10px;padding:12px 14px;margin:14px 0;font-size:14px}.status.info{background:var(--blue2);color:#194c83}.status.success{background:var(--greenbg);color:var(--green)}.status.error{background:var(--redbg);color:var(--red)}.status.warn{background:var(--amberbg);color:var(--amber)}.hidden{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.stat{background:#f8fafc;border:1px solid var(--line);padding:13px;border-radius:10px}.stat b{font-size:24px;display:block;color:var(--navy)}.stat span{font-size:12px;color:var(--muted)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:420px}table{border-collapse:collapse;width:100%;font-size:13px;min-width:720px;background:white}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid #e8edf3;vertical-align:top}th{background:#edf3f9;color:#29425b;position:sticky;top:0;z-index:1}tr:last-child td{border-bottom:0}.tag{display:inline-block;border-radius:30px;padding:3px 8px;font-size:11px;font-weight:700;background:#e9eff6;color:#334d66}.tag.good{background:var(--greenbg);color:var(--green)}.tag.warn{background:var(--amberbg);color:var(--amber)}.tag.bad{background:var(--redbg);color:var(--red)}
+.mapping-select{min-width:180px;padding:7px!important;font-size:12px!important}.small{font-size:12px;color:var(--muted)}.checkrow{display:flex;gap:9px;align-items:flex-start;margin-top:12px;font-size:13px}.checkrow input{margin-top:4px}.footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}.step{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:8px;background:#e5effb;color:#194c83;font-weight:750;margin-right:8px}
+dialog{border:0;border-radius:15px;max-width:510px;width:calc(100% - 28px);padding:0;box-shadow:0 24px 80px #081a2c55}dialog::backdrop{background:#0a1b2c99}.modal{padding:24px}.modal h2{margin:0 0 8px}.modal p{color:var(--muted);font-size:14px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.settings{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}.head{align-items:flex-start}.privacy{margin-left:18px;margin-right:18px}}
+@media(max-width:420px){.settings{grid-template-columns:1fr 1fr}.head{gap:11px}.logo{width:44px;height:44px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="head"><div class="logo" aria-hidden="true">▤</div><div><h1>Air Rate Card Automation</h1><p class="subtitle">Review mappings, merge air rate sheets, and download a formatted working copy.</p></div></div>
+ <div class="privacy"><span aria-hidden="true">🔒</span><span><strong>Privacy first:</strong> files are processed in this browser. Workbook contents and passwords are not uploaded.</span></div>
+</header>
+<main>
+ <div class="status info" id="libraryStatus">Loading browser-based Excel support… An internet connection is required to load the Excel library. Workbook contents are not sent to the library provider.</div>
+ <div class="grid">
+  <section class="card">
+   <h2><span class="step">1</span>Main workbook</h2><p class="hint">Destination workbook. Your original file is never modified.</p>
+   <label class="upload" for="mainFile"><span style="font-size:24px">↑</span><strong>Choose main Excel workbook</strong><small>.xlsx or .xlsm</small></label><input id="mainFile" type="file" accept=".xlsx,.xlsm">
+   <div class="file-name" id="mainFileName">No file selected</div>
+   <label for="mainSheet">Destination worksheet</label><select id="mainSheet" disabled><option>Upload a workbook first</option></select>
+  </section>
+  <section class="card">
+   <h2><span class="step">2</span>Secondary workbook</h2><p class="hint">Source workbook containing the rate data to copy.</p>
+   <label class="upload" for="secFile"><span style="font-size:24px">↑</span><strong>Choose secondary Excel workbook</strong><small>.xlsx or .xlsm</small></label><input id="secFile" type="file" accept=".xlsx,.xlsm">
+   <div class="file-name" id="secFileName">No file selected</div>
+   <label for="secSheet">Source worksheet</label><select id="secSheet" disabled><option>Upload a workbook first</option></select>
+  </section>
+ </div>
+ <section class="card section">
+  <div class="section-title"><h2><span class="step">3</span>Workbook layout</h2><span class="tag">Default template settings</span></div>
+  <p class="hint">These defaults match the current rate-sheet template. Change them only if your workbook layout differs.</p>
+  <div class="settings">
+   <div><label for="mainHeader">Main header row</label><input id="mainHeader" type="number" min="1" value="17"></div>
+   <div><label for="secHeader">Secondary header row</label><input id="secHeader" type="number" min="1" value="1"></div>
+   <div><label for="dataStart">Data starts at row</label><input id="dataStart" type="number" min="1" value="20"></div>
+   <div><label for="formatRow">Format template row</label><input id="formatRow" type="number" min="1" value="18"></div>
+  </div>
+  <div class="checkrow"><input type="checkbox" id="replaceConfirm"><label for="replaceConfirm" style="margin:0;font-weight:500">I understand the output copy will replace mapped destination-column values from the selected data-start row onward. Rows 18 and 19 remain unchanged with the default settings.</label></div>
+  <div class="actions"><button id="analyzeBtn" class="primary" disabled>Analyze headers &amp; preview</button><button id="resetBtn" class="secondary">Reset</button></div>
+ </section>
+ <section class="card section hidden" id="preflight">
+  <div class="section-title"><h2>4. Mapping review</h2><span id="preflightBadge" class="tag">Awaiting review</span></div>
+  <p class="hint">Only confirmed mappings will be copied. Fuzzy suggestions are never copied unless you explicitly select a destination below. Formula-protected columns are blocked.</p>
+  <div id="stats" class="stats"></div>
+  <div id="blocking" class="status error hidden"></div>
+  <div class="table-wrap"><table><thead><tr><th>Source header</th><th>Destination header</th><th>Match status</th><th>Action / mapping</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
+  <div class="actions"><button id="mergeBtn" class="primary" disabled>Merge into working copy</button><button id="downloadBtn" class="primary hidden">Download working copy</button></div>
+  <div id="mergeStatus" class="status hidden"></div>
+  <div id="resultSummary" class="hidden"></div>
+ </section>
+ <section class="card section">
+  <h2>How it handles protected workbooks</h2>
+  <p class="hint" style="margin-bottom:0">If an Office-encrypted workbook is detected, the page asks for its password but cannot decrypt it with the browser Excel library. It will clearly explain that limitation. Open the file in Excel, remove the encryption password locally, save a copy, and upload that copy. The password is never transmitted.</p>
+ </section>
+ <div class="footer">Air Rate Card Automation · Client-side workbook processing · Use test files before processing business-critical workbooks.</div>
+</main>
+<dialog id="passwordDialog">
+ <div class="modal">
+  <h2>Password-protected workbook</h2>
+  <p id="passwordFileName"></p>
+  <label for="workbookPassword">Workbook password</label><input type="password" id="workbookPassword" autocomplete="off" placeholder="Enter password" style="width:100%;border:1px solid #cbd7e3;border-radius:8px;padding:10px">
+  <div class="status warn">This browser version cannot decrypt Office-encrypted Excel files. The password cannot unlock the workbook here and will not be sent anywhere.</div>
+  <p>To continue, open the workbook in Excel and remove its password via <strong>File → Info → Protect Workbook → Encrypt with Password</strong>. Clear the password, save a copy, and upload that copy.</p>
+  <div class="modal-actions"><button id="closePassword" class="primary">Understood</button></div>
+ </div>
+</dialog>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+const state={main:null,sec:null,mainBuffer:null,secBuffer:null,mainName:"",secName:"",maps:[],formulaCols:new Map(),sourceRows:[],outputBuffer:null,mainFile:null,secFile:null};
+const libStatus=$("libraryStatus");
+if(window.ExcelJS){libStatus.className="status success";libStatus.textContent="Excel support is ready. Files stay in this browser; workbook contents are not uploaded."}
+else{libStatus.className="status error";libStatus.textContent="Excel support could not load. Check your internet connection or CDN access, then reload this page."}
+function norm(v){if(v===null||v===undefined)return"";return String(v).replace(/\u00a0/g," ").replace(/[\r\n\t]/g," ").replace(/\s+/g," ").trim().toLocaleLowerCase()}
+function compact(v){return norm(v).replace(/\s+/g,"")}
+function cellValue(cell){let v=cell?.value;if(v&&typeof v==="object"){if("result"in v && v.result!==undefined)return v.result;if("text"in v)return v.text;if("richText"in v)return v.richText.map(x=>x.text).join("");if("hyperlink"in v)return v.text||v.hyperlink;}return v}
+function isBlank(v){return v===null||v===undefined||(typeof v==="string"&&v.trim()==="")}
+function headerInfo(ws,row){const headers=[],occ=new Map(),blank=[];const r=ws.getRow(row);for(let c=1;c<=ws.columnCount;c++){const raw=cellValue(r.getCell(c));const key=norm(raw);headers.push({col:c,raw:raw==null?"":String(raw),key});if(!key)blank.push(c);else{if(!occ.has(key))occ.set(key,[]);occ.get(key).push(c)}}return{headers,occ,blank,duplicates:[...occ].filter(([k,v])=>v.length>1)}}
+function excelCol(n){let s="";while(n){let r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26)}return s}
+function setSelect(select,items){select.innerHTML="";items.forEach((name,i)=>{const o=document.createElement("option");o.value=name;o.textContent=name;select.append(o)});select.disabled=!items.length}
+function setFileName(which,file){$(which+"FileName").textContent=file?file.name:"No file selected"}
+async function loadFile(which,file){if(!file)return;state[which+"File"]=file;setFileName(which,file);$("preflight").classList.add("hidden");$("mergeBtn").disabled=true;$("downloadBtn").classList.add("hidden");$("mergeStatus").classList.add("hidden");
+ const buf=await file.arrayBuffer();const sig=new Uint8Array(buf.slice(0,8));if(sig[0]===0xd0&&sig[1]===0xcf&&sig[2]===0x11&&sig[3]===0xe0){$("passwordFileName").textContent=file.name+" appears to be password-protected Office data or a legacy .xls file."; $("workbookPassword").value="";$("passwordDialog").showModal();return}
+ try{const wb=new ExcelJS.Workbook();await wb.xlsx.load(buf);state[which]=wb;state[which+"Buffer"]=buf;state[which+"Name"]=file.name;setSelect($(which==="main"?"mainSheet":"secSheet"),wb.worksheets.map(s=>s.name));setFileName(which,file);$("analyzeBtn").disabled=!(state.main&&state.sec);libStatus.className="status success";libStatus.textContent="Loaded "+file.name+" locally. No workbook contents were uploaded."}
+ catch(e){state[which]=null;libStatus.className="status error";libStatus.textContent="Could not open "+file.name+". If it is password-protected, remove the password locally in Excel and upload an unprotected .xlsx copy. Details: "+(e.message||e)}
+}
+$("mainFile").addEventListener("change",e=>loadFile("main",e.target.files[0]));
+$("secFile").addEventListener("change",e=>loadFile("sec",e.target.files[0]));
+$("closePassword").onclick=()=>{$("passwordDialog").close();$("workbookPassword").value=""};
+function formulaColumns(ws){const out=new Map(),labelRow=7,exampleRow=8;for(let c=1;c<=ws.columnCount;c++){const label=cellValue(ws.getRow(labelRow).getCell(c));const ex=cellValue(ws.getRow(exampleRow).getCell(c));if((typeof label==="string"&&label.trim().toLowerCase()==="formula")||(typeof ex==="string"&&ex.trim().startsWith("=")))out.set(c,typeof ex==="string"&&ex.trim().startsWith("=")?ex.trim():"")}return out}
+function findMapping(secHeaders,mainHeaders,formulas){
+ const mainByKey=mainHeaders.occ, mainList=mainHeaders.headers.filter(h=>h.key), used=new Set(), maps=[];
+ const compactOcc=new Map();for(const h of mainList){const k=compact(h.key);if(!compactOcc.has(k))compactOcc.set(k,[]);compactOcc.get(k).push(h)}
+ for(const s of secHeaders.headers){if(!s.key)continue;let candidates=mainByKey.get(s.key)||[], dest=null, status="",reason="";
+  if(candidates.length===1){dest=mainHeaders.headers.find(h=>h.col===candidates[0]);status="Exact match"}
+  else if(candidates.length>1){status="Ambiguous duplicate";reason="Matching main header is duplicated"}
+  else {const cc=compactOcc.get(compact(s.key))||[];if(cc.length===1){dest=cc[0];status="Whitespace-insensitive match"}else if(cc.length>1){status="Ambiguous compact match";reason="More than one main header matches without spaces"}else{
+    let best=null,bestRatio=0;for(const h of mainList){if(!h.key)continue;const a=s.key,b=h.key;const d=levenshtein(a,b),ratio=1-d/Math.max(a.length,b.length,1);if(ratio>bestRatio){bestRatio=ratio;best=h}}
+    if(best&&bestRatio>=.70){dest=best;status="Fuzzy suggestion";reason=Math.round(bestRatio*100)+"% similar; review before copying"}else{status="Unmatched";reason="No sufficiently similar destination header"}
+  }}
+  if(dest&&formulas.has(dest.col)){status="Formula-protected";reason="Destination is formula-protected; source value will not overwrite it";dest=null}
+  if(dest&&used.has(dest.col)){status="Destination already mapped";reason="Another source column already claims this destination";dest=null}
+  if(dest){used.add(dest.col)}
+  maps.push({source:s,dest,status,reason,selected:dest?String(dest.col):"",automatic:!!dest&&status!=="Fuzzy suggestion"});
+ }
+ return maps
+}
+function levenshtein(a,b){const prev=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){let diag=prev[0];prev[0]=i;for(let j=1;j<=b.length;j++){const temp=prev[j];prev[j]=Math.min(prev[j]+1,prev[j-1]+1,diag+(a[i-1]===b[j-1]?0:1));diag=temp}}return prev[b.length]}
+function renderMappings(){const body=$("mappingRows");body.innerHTML="";const mainWs=state.main.getWorksheet($("mainSheet").value),hrow=Number($("mainHeader").value),mainH=headerInfo(mainWs,hrow);
+ for(let i=0;i<state.maps.length;i++){const m=state.maps[i],tr=document.createElement("tr");const td1=document.createElement("td");td1.textContent=m.source.raw||"(blank)";tr.append(td1);
+  const td2=document.createElement("td"),sel=document.createElement("select");sel.className="mapping-select";const none=document.createElement("option");none.value="";none.textContent="— Do not copy —";sel.append(none);
+  for(const h of mainH.headers){if(!h.key)continue;const o=document.createElement("option");o.value=String(h.col);o.textContent=h.raw+" (col "+excelCol(h.col)+")"+(state.formulaCols.has(h.col)?" [formula]":"");sel.append(o)}
+  sel.value=m.selected||"";sel.disabled=m.status==="Formula-protected"||m.status==="Ambiguous duplicate"||m.status==="Ambiguous compact match"||!m.source.key;
+  sel.addEventListener("change",()=>{const col=Number(sel.value)||null;if(col&&state.formulaCols.has(col)){sel.value="";alert("That destination column is formula-protected and cannot receive source values.");return}
+   const already=state.maps.some((x,j)=>j!==i&&Number(x.selected)===col&&col);if(already){alert("That destination column is already mapped from another source header.");sel.value=m.selected||"";return}
+   m.selected=col?String(col):"";m.dest=col?mainH.headers.find(h=>h.col===col):null;m.status=col?"User-confirmed mapping":"Not copied";m.reason=col?"Destination selected by user":"Excluded by user";m.automatic=false;renderMappings();updateStats()
+  });
+  td2.append(sel);tr.append(td2);
+  const td3=document.createElement("td"),tag=document.createElement("span");tag.className="tag "+(m.selected?"good":(["Fuzzy suggestion","Ambiguous duplicate","Ambiguous compact match","Formula-protected","Unmatched","Destination already mapped"].includes(m.status)?"warn":""));tag.textContent=m.selected?(m.automatic?m.status:"Confirmed manually"):m.status;td3.append(tag);tr.append(td3);
+  const td4=document.createElement("td");td4.textContent=m.reason|| (m.selected?"Will copy":"Not selected");tr.append(td4);body.append(tr)
+ }
+ updateStats()
+}
+function updateStats(){const confirmed=state.maps.filter(m=>m.selected&&!state.formulaCols.has(Number(m.selected))).length;const fuzzy=state.maps.filter(m=>m.status==="Fuzzy suggestion").length;const unresolved=state.maps.filter(m=>!m.selected&&m.source.key&&m.status!=="Formula-protected").length;const formula=state.maps.filter(m=>m.status==="Formula-protected").length;
+ $("stats").innerHTML=[["Main headers",state.main?headerInfo(state.main.getWorksheet($("mainSheet").value),Number($("mainHeader").value)).headers.filter(h=>h.key).length:0],["Source headers",state.maps.filter(m=>m.source.key).length],["Confirmed mappings",confirmed],["Formula-protected",formula]].map(x=>`<div class="stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join("");
+ const mainH=headerInfo(state.main.getWorksheet($("mainSheet").value),Number($("mainHeader").value)),secH=headerInfo(state.sec.getWorksheet($("secSheet").value),Number($("secHeader").value));
+ const blocking=[];if(mainH.duplicates.length)blocking.push("Main workbook has duplicate nonblank headers: "+mainH.duplicates.map(([k,v])=>`"${k}" (${v.map(excelCol).join(", ")})`).join("; "));if(secH.duplicates.length)blocking.push("Secondary workbook has duplicate nonblank headers: "+secH.duplicates.map(([k,v])=>`"${k}" (${v.map(excelCol).join(", ")})`).join("; "));if(secH.blank.length)blocking.push("Secondary workbook has blank header cells in columns "+secH.blank.map(excelCol).join(", ")+". Add valid headers or remove these columns before merging.");
+ $("blocking").classList.toggle("hidden",!blocking.length);$("blocking").textContent=blocking.join(" ");$("mergeBtn").disabled=!!blocking.length||confirmed===0||!$("replaceConfirm").checked||!window.ExcelJS;
+ $("preflightBadge").textContent=blocking.length?"Resolve blocking issues":confirmed+" mapping(s) ready";$("preflightBadge").className="tag "+(blocking.length?"bad":"good");
+}
+$("replaceConfirm").addEventListener("change",updateStats);
+$("mainSheet").addEventListener("change",()=>{$("analyzeBtn").disabled=!(state.main&&state.sec);$("preflight").classList.add("hidden")});
+$("secSheet").addEventListener("change",()=>{$("analyzeBtn").disabled=!(state.main&&state.sec);$("preflight").classList.add("hidden")});
+$("analyzeBtn").onclick=()=>{
+ try{const mainWs=state.main.getWorksheet($("mainSheet").value),secWs=state.sec.getWorksheet($("secSheet").value);const mh=Number($("mainHeader").value),sh=Number($("secHeader").value);if(!mh||!sh||!Number($("dataStart").value)||!Number($("formatRow").value))throw Error("Header and row numbers must be positive integers.");
+ state.formulaCols=formulaColumns(mainWs);const mainH=headerInfo(mainWs,mh),secH=headerInfo(secWs,sh);state.maps=findMapping(secH,mainH,state.formulaCols);$("preflight").classList.remove("hidden");$("mergeStatus").classList.add("hidden");$("downloadBtn").classList.add("hidden");$("resultSummary").classList.add("hidden");renderMappings();$("preflight").scrollIntoView({behavior:"smooth",block:"start"})
+ }catch(e){alert("Could not analyze workbooks: "+e.message)}
+};
+function cloneStyle(from,to){if(from.style)to.style=JSON.parse(JSON.stringify(from.style));if(from.numFmt)to.numFmt=from.numFmt;if(from.alignment)to.alignment=JSON.parse(JSON.stringify(from.alignment));if(from.protection)to.protection=JSON.parse(JSON.stringify(from.protection));}
+function translateFormula(formula,sourceRow,targetRow){return formula.replace(/(\$?[A-Z]{1,3})(\$?)(\d+)/g,(match,col,abs,row)=>{if(abs==="$")return match;const nr=Number(row)+(targetRow-sourceRow);return nr>0?col+abs+nr:match})}
+function addMismatchSheet(wb){const old=wb.getWorksheet("Mismatch Report");if(old)wb.removeWorksheet(old.id);const ws=wb.addWorksheet("Mismatch Report");ws.columns=[{width:8},{width:28},{width:18},{width:38},{width:18},{width:38},{width:65}];ws.mergeCells("A1:G1");ws.getCell("A1").value="MISMATCH REPORT — SECONDARY TO MAIN ONLY";ws.getCell("A1").font={bold:true,size:14,color:{argb:"FFFFFFFF"}};ws.getCell("A1").fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F4E79"}};ws.getRow(1).height=28;ws.mergeCells("A2:G2");ws.getCell("A2").value=`Source headers: ${state.maps.length} | Confirmed mappings: ${state.maps.filter(m=>m.selected).length} | Unresolved/suggestions: ${state.maps.filter(m=>!m.selected).length} | Formula protected: ${state.maps.filter(m=>m.status==="Formula-protected").length}`;ws.getCell("A2").font={italic:true,color:{argb:"FF595959"}};
+ const heads=["#","Status","Source column","Source header","Main column","Main header / suggestion","Reason / action"];ws.addRow([]);const hr=ws.addRow(heads);hr.height=30;hr.eachCell(c=>{c.font={bold:true,color:{argb:"FFFFFFFF"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F4E79"}};c.alignment={vertical:"middle",wrapText:true}});
+ const report=state.maps.filter(m=>!m.selected||m.status==="Fuzzy suggestion"||m.status==="Formula-protected");report.forEach((m,i)=>{const row=ws.addRow([i+1,m.status,excelCol(m.source.col),m.source.raw,m.dest?excelCol(m.dest.col):"",m.dest?m.dest.raw:"",m.reason||"Not mapped"]);row.eachCell(c=>{c.alignment={vertical:"top",wrapText:true};c.border={bottom:{style:"thin",color:{argb:"FFD9E2EC"}}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:m.status==="Formula-protected"?"FFFFF2CC":m.selected?"FFE2EFDA":"FFFFD7D7"}}})});ws.views=[{state:"frozen",ySplit:4}];ws.autoFilter={from:{row:4,column:1},to:{row:Math.max(4,ws.rowCount),column:7}}}
+$("mergeBtn").onclick=async()=>{
+ const mainWs=state.main.getWorksheet($("mainSheet").value),secWs=state.sec.getWorksheet($("secSheet").value),dataStart=Number($("dataStart").value),formatRow=Number($("formatRow").value),mainHeader=Number($("mainHeader").value),secHeader=Number($("secHeader").value);
+ const maps=state.maps.filter(m=>m.selected&&!state.formulaCols.has(Number(m.selected)));if(!maps.length)return;
+ if(!confirm(`Create a separate working copy?\n\nSource rows will be written from row ${dataStart}. Mapped destination cells from row ${dataStart} onward will be replaced in the output copy. The original file remains untouched.`))return;
+ $("mergeBtn").disabled=true;$("mergeStatus").className="status info";$("mergeStatus").textContent="Merging workbook in your browser…";$("mergeStatus").classList.remove("hidden");
+ try{
+  const out=new ExcelJS.Workbook();await out.xlsx.load(state.mainBuffer);const dest=out.getWorksheet($("mainSheet").value);if(!dest)throw Error("Could not find the selected main worksheet in the working copy.");
+  const destHeaders=headerInfo(dest,mainHeader);const formulaMap=formulaColumns(dest);let lastMain=mainHeader;const nonFormulaCols=destHeaders.headers.filter(h=>h.key&&!formulaMap.has(h.col)).map(h=>h.col);for(let r=dest.rowCount;r>mainHeader;r--){if(nonFormulaCols.some(c=>!isBlank(cellValue(dest.getRow(r).getCell(c))))){lastMain=r;break}}
+  let backfilled=0;for(let r=dataStart;r<=lastMain;r++){const hasData=nonFormulaCols.some(c=>!isBlank(cellValue(dest.getRow(r).getCell(c))));if(!hasData)continue;for(const [col,formula] of formulaMap){if(!formula)continue;const cell=dest.getRow(r).getCell(col);if(isBlank(cell.value)){cell.value=translateFormula(formula,8,r);backfilled++}}}
+  const sourceHeaderInfo=headerInfo(secWs,secHeader),sourceCols=sourceHeaderInfo.headers.filter(h=>h.key).map(h=>h.col);if(!sourceCols.length)throw Error("No nonblank source headers found.");
+  let written=0,firstOut=dataStart-1;for(let r=secHeader+1;r<=secWs.rowCount;r++){const sr=secWs.getRow(r);if(sourceCols.every(c=>isBlank(cellValue(sr.getCell(c)))))continue;written++;const targetRow=dataStart+written-1;const target=dest.getRow(targetRow),template=dest.getRow(formatRow);
+   for(let c=1;c<=Math.max(dest.columnCount,template.cellCount);c++){const a=template.getCell(c),b=target.getCell(c);cloneStyle(a,b)}target.height=template.height;target.hidden=template.hidden;
+   for(const m of maps){const v=cellValue(sr.getCell(m.source.col));target.getCell(Number(m.selected)).value=v===undefined?null:v}
+   for(const [col,formula] of formulaMap){if(formula)target.getCell(col).value=translateFormula(formula,8,targetRow)}
+   target.commit?.();
+  }
+  addMismatchSheet(out);out.calcProperties.fullCalcOnLoad=true;out.calcProperties.forceFullCalc=true;out.calcProperties.calcMode="auto";
+  state.outputBuffer=await out.xlsx.writeBuffer();$("mergeStatus").className="status success";$("mergeStatus").textContent="Merge complete. Your working copy is ready to download."; $("downloadBtn").classList.remove("hidden");
+  $("resultSummary").classList.remove("hidden");$("resultSummary").innerHTML=`<div class="stats"><div class="stat"><b>${written}</b><span>Rows written from row ${dataStart}</span></div><div class="stat"><b>${maps.length}</b><span>Confirmed columns copied</span></div><div class="stat"><b>${backfilled}</b><span>Blank formulas backfilled</span></div><div class="stat"><b>${state.maps.filter(m=>!m.selected).length}</b><span>Unresolved / excluded source columns</span></div></div><p class="small">The original workbook has not been modified. Review the output and the Mismatch Report before using it.</p>`;
+  $("downloadBtn").onclick=()=>{const blob=new Blob([state.outputBuffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=state.mainName.replace(/\.(xlsx|xlsm)$/i,"")+"_working_copy.xlsx";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)};
+ }catch(e){$("mergeStatus").className="status error";$("mergeStatus").textContent="Merge failed: "+(e.message||e);console.error(e)}finally{updateStats()}
+};
+$("resetBtn").onclick=()=>{if(!confirm("Reset the current page and clear selected files?"))return;location.reload()};
+})();
+</script>
+</body>
+</html>
