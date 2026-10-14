@@ -67,7 +67,7 @@ dialog{border:0;border-radius:15px;max-width:510px;width:calc(100% - 28px);paddi
  </section>
  <section class="card section">
   <h2>How it handles protected workbooks</h2>
-  <p class="hint" style="margin-bottom:0">If an Office-encrypted workbook is detected, the page asks for its password but cannot decrypt it with the browser Excel library. It will clearly explain that limitation. Open the file in Excel, remove the encryption password locally, save a copy, and upload that copy. The password is never transmitted.</p>
+  <p class="hint" style="margin-bottom:0">For Office-encrypted workbooks, the page attempts browser-side decryption after you enter the password. No workbook content or password is intentionally uploaded. Success depends on browser library compatibility and the encryption format. Test with copies of representative files before business use.</p>
  </section>
  <div class="footer">Air Rate Card Automation · Client-side workbook processing · Use test files before processing business-critical workbooks.</div>
 </main>
@@ -76,9 +76,10 @@ dialog{border:0;border-radius:15px;max-width:510px;width:calc(100% - 28px);paddi
   <h2>Password-protected workbook</h2>
   <p id="passwordFileName"></p>
   <label for="workbookPassword">Workbook password</label><input type="password" id="workbookPassword" autocomplete="off" placeholder="Enter password" style="width:100%;border:1px solid #cbd7e3;border-radius:8px;padding:10px">
-  <div class="status warn">This browser version cannot decrypt Office-encrypted Excel files. The password cannot unlock the workbook here and will not be sent anywhere.</div>
-  <p>To continue, open the workbook in Excel and remove its password via <strong>File → Info → Protect Workbook → Encrypt with Password</strong>. Clear the password, save a copy, and upload that copy.</p>
-  <div class="modal-actions"><button id="closePassword" class="primary">Understood</button></div>
+  <div class="status info">The app will attempt to decrypt this workbook locally in your browser. The password and workbook contents are not sent to a server.</div>
+  <p>If the encryption format is unsupported or the password is incorrect, the app will show an error. In that case, open the file in Excel and save an unencrypted working copy if your organization's policy permits it.</p>
+  <div id="passwordError" class="status error hidden"></div>
+  <div class="modal-actions"><button id="closePassword" class="secondary" type="button">Cancel</button><button id="submitPassword" class="primary" type="button">Unlock workbook</button></div>
  </div>
 </dialog>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
@@ -98,14 +99,66 @@ function headerInfo(ws,row){const headers=[],occ=new Map(),blank=[];const r=ws.g
 function excelCol(n){let s="";while(n){let r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26)}return s}
 function setSelect(select,items){select.innerHTML="";items.forEach((name,i)=>{const o=document.createElement("option");o.value=name;o.textContent=name;select.append(o)});select.disabled=!items.length}
 function setFileName(which,file){$(which+"FileName").textContent=file?file.name:"No file selected"}
-async function loadFile(which,file){if(!file)return;state[which+"File"]=file;setFileName(which,file);$("preflight").classList.add("hidden");$("mergeBtn").disabled=true;$("downloadBtn").classList.add("hidden");$("mergeStatus").classList.add("hidden");
- const buf=await file.arrayBuffer();const sig=new Uint8Array(buf.slice(0,8));if(sig[0]===0xd0&&sig[1]===0xcf&&sig[2]===0x11&&sig[3]===0xe0){$("passwordFileName").textContent=file.name+" appears to be password-protected Office data or a legacy .xls file."; $("workbookPassword").value="";$("passwordDialog").showModal();return}
- try{const wb=new ExcelJS.Workbook();await wb.xlsx.load(buf);state[which]=wb;state[which+"Buffer"]=buf;state[which+"Name"]=file.name;setSelect($(which==="main"?"mainSheet":"secSheet"),wb.worksheets.map(s=>s.name));setFileName(which,file);$("analyzeBtn").disabled=!(state.main&&state.sec);libStatus.className="status success";libStatus.textContent="Loaded "+file.name+" locally. No workbook contents were uploaded."}
- catch(e){state[which]=null;libStatus.className="status error";libStatus.textContent="Could not open "+file.name+". If it is password-protected, remove the password locally in Excel and upload an unprotected .xlsx copy. Details: "+(e.message||e)}
+async function unlockOfficeFile(buf,password){
+  const mod = await import("https://esm.sh/officecrypto-tool@0.0.19?bundle");
+  const crypto = mod.default || mod;
+  if(typeof crypto.decrypt !== "function") throw new Error("Decryption function is unavailable in the browser bundle.");
+  const plain = await crypto.decrypt(buf, {password});
+  if(plain instanceof ArrayBuffer) return plain;
+  if(ArrayBuffer.isView(plain)) return plain.buffer.slice(plain.byteOffset, plain.byteOffset + plain.byteLength);
+  throw new Error("The decryption library returned an unsupported data format.");
+}
+function isOfficeContainer(buf){
+  const sig=new Uint8Array(buf.slice(0,8));
+  return sig[0]===0xd0&&sig[1]===0xcf&&sig[2]===0x11&&sig[3]===0xe0;
+}
+let pendingEncryptedFile=null;
+async function parseWorkbook(which,file,buf){
+  const wb=new ExcelJS.Workbook(); await wb.xlsx.load(buf);
+  state[which]=wb;state[which+"Buffer"]=buf;state[which+"Name"]=file.name;
+  setSelect($(which==="main"?"mainSheet":"secSheet"),wb.worksheets.map(s=>s.name));
+  setFileName(which,file);$("analyzeBtn").disabled=!(state.main&&state.sec);
+  libStatus.className="status success";
+  libStatus.textContent="Loaded "+file.name+" locally. No workbook contents were uploaded.";
+}
+async function loadFile(which,file){
+  if(!file)return;
+  state[which+"File"]=file;setFileName(which,file);
+  $("preflight").classList.add("hidden");$("mergeBtn").disabled=true;$("downloadBtn").classList.add("hidden");$("mergeStatus").classList.add("hidden");
+  try{
+    const buf=await file.arrayBuffer();
+    if(isOfficeContainer(buf)){
+      pendingEncryptedFile={which,file,buf};
+      $("passwordFileName").textContent=file.name+" appears to be an encrypted Office workbook.";
+      $("workbookPassword").value="";$("passwordError").classList.add("hidden");$("passwordError").textContent="";
+      $("passwordDialog").showModal();$("workbookPassword").focus();return;
+    }
+    await parseWorkbook(which,file,buf);
+  }catch(e){
+    state[which]=null;libStatus.className="status error";
+    libStatus.textContent="Could not open "+file.name+". Details: "+(e.message||e);
+  }
+}
+async function submitWorkbookPassword(){
+  if(!pendingEncryptedFile)return;
+  const password=$("workbookPassword").value;
+  if(!password){$("passwordError").textContent="Enter the workbook password.";$("passwordError").className="status error";$("passwordError").classList.remove("hidden");return;}
+  const pending=pendingEncryptedFile;$("submitPassword").disabled=true;
+  $("passwordError").className="status info";$("passwordError").textContent="Attempting local decryption…";$("passwordError").classList.remove("hidden");
+  try{
+    const plain=await unlockOfficeFile(pending.buf,password);
+    await parseWorkbook(pending.which,pending.file,plain);
+    pendingEncryptedFile=null;$("passwordDialog").close();$("workbookPassword").value="";
+  }catch(e){
+    $("passwordError").className="status error";
+    $("passwordError").textContent="Could not unlock this workbook. The password may be incorrect, or this encryption format may be unsupported. Details: "+(e.message||e);
+  }finally{$("submitPassword").disabled=false;}
 }
 $("mainFile").addEventListener("change",e=>loadFile("main",e.target.files[0]));
 $("secFile").addEventListener("change",e=>loadFile("sec",e.target.files[0]));
-$("closePassword").onclick=()=>{$("passwordDialog").close();$("workbookPassword").value=""};
+$("submitPassword").onclick=submitWorkbookPassword;
+$("workbookPassword").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitWorkbookPassword()}});
+$("closePassword").onclick=()=>{$("passwordDialog").close();$("workbookPassword").value="";$("passwordError").classList.add("hidden");pendingEncryptedFile=null};
 function formulaColumns(ws){const out=new Map(),labelRow=7,exampleRow=8;for(let c=1;c<=ws.columnCount;c++){const label=cellValue(ws.getRow(labelRow).getCell(c));const ex=cellValue(ws.getRow(exampleRow).getCell(c));if((typeof label==="string"&&label.trim().toLowerCase()==="formula")||(typeof ex==="string"&&ex.trim().startsWith("=")))out.set(c,typeof ex==="string"&&ex.trim().startsWith("=")?ex.trim():"")}return out}
 function findMapping(secHeaders,mainHeaders,formulas){
  const mainByKey=mainHeaders.occ, mainList=mainHeaders.headers.filter(h=>h.key), used=new Set(), maps=[];
